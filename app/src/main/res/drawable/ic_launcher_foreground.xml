@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- White Bus Body -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M38,28h32c4,0 6,2 6,6v40c0,4 -2,6 -6,6h-32c-4,0 -6,-2 -6,-6v-40c0,-4 2,-6 6,-6z" />
+
+    <!-- Windshield (Dark Green for contrast) -->
+    <path
+        android:fillColor="#1B5E20"
+        android:pathData="M36,34h17v16h-17z M55,34h17v16h-17z" />
+
+    <!-- Headlights -->
+    <path
+        android:fillColor="#1B5E20"
+        android:pathData="M42,68a3,3 0 1,0 6,0a3,3 0 1,0 -6,0 M60,68a3,3 0 1,0 6,0a3,3 0 1,0 -6,0" />
+
+    <!-- Route Path / Grille -->
+    <path
+        android:fillColor="#1B5E20"
+        android:pathData="M36,56h36v3h-36z" />
+
+    <!-- Route Line below the bus -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:pathData="M25,85c10,0 15,-10 29,-10s19,10 29,10" />
+
+</vector>
