@@ -37,6 +37,7 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.LatLngBounds
 import com.google.maps.android.compose.*
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -75,6 +76,8 @@ fun MapScreen(
     var userLocation by remember { mutableStateOf<LatLng?>(null) }
     var userSpeed by remember { mutableStateOf(0f) }
     var isTrackingSpecificBus by remember { mutableStateOf(initialBusId != null) }
+    var hasCenteredOnLiveBuses by remember { mutableStateOf(false) }
+    var isMapLoaded by remember { mutableStateOf(false) }
     var mapType by remember { mutableStateOf(MapType.NORMAL) }
     
     var searchQuery by remember { mutableStateOf("") }
@@ -87,6 +90,10 @@ fun MapScreen(
     LaunchedEffect(Unit) {
         BusSimulation.getBusUpdates().collectLatest { updatedBuses ->
             buses = updatedBuses
+
+            if (updatedBuses.isNotEmpty() && !isTrackingSpecificBus && selectedBus == null) {
+                hasCenteredOnLiveBuses = false
+            }
             
             if (isTrackingSpecificBus && initialBusId != null) {
                 val foundBus = updatedBuses.find { it.busNumber == initialBusId || it.id == initialBusId }
@@ -101,6 +108,21 @@ fun MapScreen(
                 selectedBus = updatedBuses.find { b -> b.id == selectedBus?.id }
             }
         }
+    }
+
+    LaunchedEffect(isMapLoaded, buses, selectedBus, isTrackingSpecificBus) {
+        if (!isMapLoaded || hasCenteredOnLiveBuses || selectedBus != null || isTrackingSpecificBus || buses.isEmpty()) return@LaunchedEffect
+
+        val boundsBuilder = LatLngBounds.builder()
+        buses.forEach { bus -> boundsBuilder.include(LatLng(bus.latitude, bus.longitude)) }
+        BusSimulation.stops.take(3).forEach { stop -> boundsBuilder.include(LatLng(stop.latitude, stop.longitude)) }
+
+        scope.launch {
+            cameraPositionState.animate(
+                CameraUpdateFactory.newLatLngBounds(boundsBuilder.build(), 120)
+            )
+        }
+        hasCenteredOnLiveBuses = true
     }
 
     LaunchedEffect(permissionState.allPermissionsGranted) {
@@ -211,6 +233,7 @@ fun MapScreen(
             GoogleMap(
                 modifier = Modifier.fillMaxSize(),
                 cameraPositionState = cameraPositionState,
+                onMapLoaded = { isMapLoaded = true },
                 properties = MapProperties(
                     isMyLocationEnabled = permissionState.allPermissionsGranted,
                     mapType = mapType,
