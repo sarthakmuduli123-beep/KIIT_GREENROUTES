@@ -25,12 +25,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.graphics.asImageBitmap
+import android.graphics.Bitmap
 import com.example.kiitgreenroutes.data.model.BusPass
 import com.example.kiitgreenroutes.data.model.PassStatus
 import com.example.kiitgreenroutes.data.model.UserSession
+import com.google.zxing.BarcodeFormat
+import com.google.zxing.qrcode.QRCodeWriter
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -60,25 +66,33 @@ fun BusPassScreen(onBack: () -> Unit) {
     }
 
     Scaffold(
+        modifier = Modifier.fillMaxSize(),
         topBar = {
-            TopAppBar(
-                title = { Text("KIIT Bus Pass", fontWeight = FontWeight.ExtraBold) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Rounded.ArrowBack, contentDescription = "Back")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
-            )
+            Surface(
+                color = Color.White,
+                tonalElevation = 8.dp,
+                shadowElevation = 4.dp
+            ) {
+                TopAppBar(
+                    title = { Text("KIIT Bus Pass", fontWeight = FontWeight.ExtraBold, color = Color(0xFF1A237E)) },
+                    navigationIcon = {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.Rounded.ArrowBack, contentDescription = "Back")
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White),
+                    modifier = Modifier.statusBarsPadding()
+                )
+            }
         }
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
                 .background(Color(0xFFF8F9FA))
                 .verticalScroll(rememberScrollState())
-                .padding(20.dp),
+                .padding(top = padding.calculateTopPadding())
+                .padding(horizontal = 20.dp, vertical = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Live Status Indicator
@@ -153,6 +167,24 @@ fun LiveStatusBanner(status: PassStatus) {
 
 @Composable
 fun PassCard(pass: BusPass, token: String) {
+    var qrBitmap by remember { mutableStateOf<Bitmap?>(null) }
+    
+    LaunchedEffect(token) {
+        withContext(Dispatchers.Default) {
+            val writer = QRCodeWriter()
+            val bitMatrix = writer.encode(token, BarcodeFormat.QR_CODE, 512, 512)
+            val width = bitMatrix.width
+            val height = bitMatrix.height
+            val bmp = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)
+            for (x in 0 until width) {
+                for (y in 0 until height) {
+                    bmp.setPixel(x, y, if (bitMatrix.get(x, y)) android.graphics.Color.BLACK else android.graphics.Color.WHITE)
+                }
+            }
+            qrBitmap = bmp
+        }
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(32.dp),
@@ -180,31 +212,21 @@ fun PassCard(pass: BusPass, token: String) {
 
             Spacer(Modifier.height(24.dp))
 
-            // Dynamic QR Section (Simulated)
+            // Dynamic QR Section
             Box(
                 modifier = Modifier
                     .size(200.dp)
-                    .background(Color(0xFFF1F3F4), RoundedCornerShape(20.dp))
+                    .background(Color.White, RoundedCornerShape(20.dp))
                     .padding(16.dp),
                 contentAlignment = Alignment.Center
             ) {
-                // In a real app, use a QR generation library here
-                // For now, we simulate a secure QR with a visual pattern
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(
-                        Icons.Rounded.QrCode2, 
-                        contentDescription = null, 
-                        modifier = Modifier.size(120.dp),
-                        tint = Color.DarkGray
+                qrBitmap?.let {
+                    androidx.compose.foundation.Image(
+                        bitmap = it.asImageBitmap(),
+                        contentDescription = "Bus Pass QR",
+                        modifier = Modifier.fillMaxSize()
                     )
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        text = token.takeLast(8), 
-                        fontSize = 10.sp, 
-                        color = Color.Gray,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
+                } ?: CircularProgressIndicator(color = Color(0xFF4CAF50))
                 
                 // Animated Scanning Line (Security feature)
                 val infiniteTransition = rememberInfiniteTransition(label = "scan")
@@ -228,6 +250,14 @@ fun PassCard(pass: BusPass, token: String) {
                     )
                 }
             }
+
+            Spacer(Modifier.height(16.dp))
+            Text(
+                text = token.takeLast(8), 
+                fontSize = 10.sp, 
+                color = Color.Gray,
+                fontWeight = FontWeight.Bold
+            )
 
             Spacer(Modifier.height(24.dp))
 

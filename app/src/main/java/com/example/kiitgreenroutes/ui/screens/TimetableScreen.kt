@@ -24,27 +24,33 @@ fun TimetableScreen(
     onRouteClick: (String) -> Unit
 ) {
     Scaffold(
+        modifier = Modifier.fillMaxSize(),
         topBar = {
-            TopAppBar(
-                title = { Text("KIIT Bus Timetable", fontWeight = FontWeight.ExtraBold) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Rounded.ArrowBack, contentDescription = "Back")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.White
+            Surface(
+                color = Color.White,
+                tonalElevation = 8.dp,
+                shadowElevation = 4.dp
+            ) {
+                TopAppBar(
+                    title = { Text("KIIT Bus Timetable", fontWeight = FontWeight.ExtraBold, color = Color(0xFF1A237E)) },
+                    navigationIcon = {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.Rounded.ArrowBack, contentDescription = "Back")
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White),
+                    modifier = Modifier.statusBarsPadding()
                 )
-            )
+            }
         }
     ) { padding ->
         val groupedRoutes = BusSimulation.routes.groupBy { it.number }
         
         LazyColumn(
             modifier = Modifier
-                .padding(padding)
                 .fillMaxSize()
                 .background(Color(0xFFF8F9FA))
+                .padding(top = padding.calculateTopPadding())
                 .padding(horizontal = 20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {

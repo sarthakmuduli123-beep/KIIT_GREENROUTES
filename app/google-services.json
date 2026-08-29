@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "825364276597",
+    "project_id": "project-c8b467f9-554d-424f-a8e",
+    "storage_bucket": "project-c8b467f9-554d-424f-a8e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:825364276597:android:bf873ab218f08703125f3c",
+        "android_client_info": {
+          "package_name": "com.example.kiitgreenroutes"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCvDaKFvipDptLyXzWlaDk6VWOlbJhComw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

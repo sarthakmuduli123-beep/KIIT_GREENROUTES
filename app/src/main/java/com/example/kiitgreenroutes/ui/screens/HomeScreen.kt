@@ -111,9 +111,10 @@ fun HomeScreen(
 
                 if (isSearchActive) {
                     val filteredRoutes = BusSimulation.routes.filter { 
-                        it.number.contains(searchQuery, ignoreCase = true) || 
+                        it.number.equals(searchQuery, ignoreCase = true) || 
+                        it.number.contains(searchQuery, ignoreCase = true) ||
                         it.name.contains(searchQuery, ignoreCase = true) 
-                    }
+                    }.distinctBy { it.number } // Show unique bus numbers
                     
                     if (filteredRoutes.isEmpty()) {
                         item {

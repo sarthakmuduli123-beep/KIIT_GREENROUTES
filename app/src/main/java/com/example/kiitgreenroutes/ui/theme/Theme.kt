@@ -55,9 +55,9 @@ private val LightColorScheme = lightColorScheme(
 
 @Composable
 fun KIITGREENROUTESTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    darkTheme: Boolean = true, // Force Dark Theme
     // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false, // Disable dynamic color to maintain KIIT Green brand
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {

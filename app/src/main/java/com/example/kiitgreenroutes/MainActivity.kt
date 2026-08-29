@@ -89,6 +89,19 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         
+                        entry<NavKey.BusTracking> { tracking ->
+                            MainContainer(
+                                initialTab = 1,
+                                targetBusId = tracking.busId,
+                                onNavigateToRouteDetails = { routeId -> 
+                                    backStack.add(NavKey.RouteDetails(routeId)) 
+                                },
+                                onNavigateToHelpAI = { backStack.add(NavKey.HelpAI) },
+                                onNavigateToProfileEdit = { backStack.add(NavKey.ProfileEdit) },
+                                onNavigateToTimetable = { backStack.add(NavKey.Timetable) }
+                            )
+                        }
+
                         entry<NavKey.RouteDetails> { routeDetails ->
                             RouteDetailsScreen(
                                 routeId = routeDetails.routeId,
@@ -111,10 +124,6 @@ class MainActivity : ComponentActivity() {
 
                         entry<NavKey.ProfileEdit> {
                             ProfileEditScreen(onBack = { backStack.removeAt(backStack.size - 1) })
-                        }
-                        
-                        entry<NavKey.BusTracking> { tracking ->
-                            BusTrackingScreen(tracking.busId)
                         }
                     }
                 )

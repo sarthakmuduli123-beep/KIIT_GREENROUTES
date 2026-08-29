@@ -1,6 +1,8 @@
 package com.example.kiitgreenroutes.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -20,6 +22,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 import com.example.kiitgreenroutes.data.model.UserSession
+import com.google.firebase.FirebaseNetworkException
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
+import com.google.firebase.auth.FirebaseAuthInvalidUserException
+import com.google.firebase.auth.userProfileChangeRequest
+import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -27,6 +36,10 @@ fun LoginScreen(onBack: () -> Unit, onLoginSuccess: () -> Unit) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
+    var isLoading by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    val auth = remember { FirebaseAuth.getInstance() }
+    val scrollState = rememberScrollState()
 
     Scaffold(
         topBar = {
@@ -44,14 +57,15 @@ fun LoginScreen(onBack: () -> Unit, onLoginSuccess: () -> Unit) {
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
-                .padding(horizontal = 30.dp),
+                .verticalScroll(scrollState)
+                .padding(horizontal = 30.dp, vertical = 20.dp),
             horizontalAlignment = Alignment.Start
         ) {
             Text(
                 text = "Welcome Back",
                 fontSize = 32.sp,
                 fontWeight = FontWeight.ExtraBold,
-                color = Color(0xFF1A237E)
+                color = MaterialTheme.colorScheme.primary
             )
             Text(
                 text = "Enter your student credentials to continue",
@@ -111,9 +125,29 @@ fun LoginScreen(onBack: () -> Unit, onLoginSuccess: () -> Unit) {
             Button(
                 onClick = {
                     if (email.endsWith("@kiit.ac.in")) {
-                        UserSession.userEmail = email
-                        UserSession.userName = "Student" // Mock name
-                        onLoginSuccess()
+                        scope.launch {
+                            isLoading = true
+                            try {
+                                val result = auth.signInWithEmailAndPassword(email, password).await()
+                                val user = result.user
+                                if (user != null) {
+                                    // Bypass email verification for testing/testing credentials
+                                    UserSession.userEmail = email
+                                    UserSession.userName = user.displayName ?: "Student"
+                                    onLoginSuccess()
+                                }
+                            } catch (e: FirebaseAuthInvalidUserException) {
+                                error = "User not found. Please sign up first."
+                            } catch (e: FirebaseAuthInvalidCredentialsException) {
+                                error = "Incorrect email or password. Please try again."
+                            } catch (e: FirebaseNetworkException) {
+                                error = "Network error. Please check your internet connection."
+                            } catch (e: Exception) {
+                                error = e.localizedMessage ?: "Login failed"
+                            } finally {
+                                isLoading = false
+                            }
+                        }
                     } else {
                         error = "Only @kiit.ac.in emails are allowed"
                     }
@@ -121,10 +155,12 @@ fun LoginScreen(onBack: () -> Unit, onLoginSuccess: () -> Unit) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
+                enabled = !isLoading,
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50)),
                 shape = RoundedCornerShape(16.dp)
             ) {
-                Text("Login", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                if (isLoading) CircularProgressIndicator(color = Color.White)
+                else Text("Login", fontSize = 18.sp, fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -137,6 +173,12 @@ fun SignupScreen(onBack: () -> Unit, onSignupSuccess: () -> Unit) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
+    var isLoading by remember { mutableStateOf(false) }
+    var showVerificationNotice by remember { mutableStateOf(false) }
+    val scrollState = rememberScrollState()
+    
+    val scope = rememberCoroutineScope()
+    val auth = remember { FirebaseAuth.getInstance() }
 
     Scaffold(
         topBar = {
@@ -154,14 +196,15 @@ fun SignupScreen(onBack: () -> Unit, onSignupSuccess: () -> Unit) {
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
-                .padding(horizontal = 30.dp),
+                .verticalScroll(scrollState)
+                .padding(horizontal = 30.dp, vertical = 20.dp),
             horizontalAlignment = Alignment.Start
         ) {
             Text(
                 text = "Create Account",
                 fontSize = 32.sp,
                 fontWeight = FontWeight.ExtraBold,
-                color = Color(0xFF1A237E)
+                color = MaterialTheme.colorScheme.primary
             )
             Text(
                 text = "Join the KIIT GreenRoute community",
@@ -223,9 +266,30 @@ fun SignupScreen(onBack: () -> Unit, onSignupSuccess: () -> Unit) {
             Button(
                 onClick = {
                     if (email.endsWith("@kiit.ac.in")) {
-                        UserSession.userEmail = email
-                        UserSession.userName = name
-                        onSignupSuccess()
+                        scope.launch {
+                            isLoading = true
+                            try {
+                                val result = auth.createUserWithEmailAndPassword(email, password).await()
+                                val user = result.user
+                                if (user != null) {
+                                    // Set Display Name
+                                    val profileUpdates = userProfileChangeRequest {
+                                        displayName = name
+                                    }
+                                    user.updateProfile(profileUpdates).await()
+                                    
+                                    // Send Verification Email
+                                    user.sendEmailVerification().await()
+                                    
+                                    showVerificationNotice = true
+                                    // UserSession is only set after verification login
+                                }
+                            } catch (e: Exception) {
+                                error = e.localizedMessage ?: "Signup failed"
+                            } finally {
+                                isLoading = false
+                            }
+                        }
                     } else {
                         error = "Only @kiit.ac.in emails are allowed"
                     }
@@ -233,11 +297,30 @@ fun SignupScreen(onBack: () -> Unit, onSignupSuccess: () -> Unit) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
+                enabled = !isLoading,
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50)),
                 shape = RoundedCornerShape(16.dp)
             ) {
-                Text("Create Account", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                if (isLoading) CircularProgressIndicator(color = Color.White)
+                else Text("Create Account", fontSize = 18.sp, fontWeight = FontWeight.Bold)
             }
         }
+    }
+
+    if (showVerificationNotice) {
+        AlertDialog(
+            onDismissRequest = { /* Don't dismiss without action */ },
+            title = { Text("Verify Email") },
+            text = { Text("A verification link has been sent to $email. Please verify your email and then login.") },
+            confirmButton = {
+                Button(onClick = { 
+                    showVerificationNotice = false
+                    auth.signOut()
+                    onBack() 
+                }) {
+                    Text("OK, Go to Login")
+                }
+            }
+        )
     }
 }

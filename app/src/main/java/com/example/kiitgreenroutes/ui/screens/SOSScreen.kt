@@ -51,25 +51,33 @@ fun SOSScreen(onBack: () -> Unit) {
     )
 
     Scaffold(
+        modifier = Modifier.fillMaxSize(),
         topBar = {
-            TopAppBar(
-                title = { Text("Campus Safety & SOS", fontWeight = FontWeight.Bold) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
-            )
+            Surface(
+                color = Color.White,
+                tonalElevation = 8.dp,
+                shadowElevation = 4.dp
+            ) {
+                TopAppBar(
+                    title = { Text("Campus Safety & SOS", fontWeight = FontWeight.Bold, color = Color(0xFF1A237E)) },
+                    navigationIcon = {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White),
+                    modifier = Modifier.statusBarsPadding()
+                )
+            }
         }
     ) { padding ->
         Column(
             modifier = Modifier
-                .padding(padding)
                 .fillMaxSize()
                 .background(Color(0xFFF8F9FA))
                 .verticalScroll(rememberScrollState())
-                .padding(24.dp),
+                .padding(top = padding.calculateTopPadding())
+                .padding(horizontal = 24.dp, vertical = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Emergency Type Toggle

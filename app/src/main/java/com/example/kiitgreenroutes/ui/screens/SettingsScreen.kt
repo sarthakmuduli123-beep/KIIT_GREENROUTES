@@ -35,12 +35,13 @@ fun SettingsScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     var showReportDialog by remember { mutableStateOf(false) }
+    var showLogoutDialog by remember { mutableStateOf(false) }
     val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            LargeTopAppBar(
+            TopAppBar(
                 title = { 
                     Text(
                         "Settings", 
@@ -48,7 +49,7 @@ fun SettingsScreen(
                         color = Color(0xFF1A237E)
                     ) 
                 },
-                colors = TopAppBarDefaults.largeTopAppBarColors(
+                colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color.White
                 )
             )
@@ -105,7 +106,7 @@ fun SettingsScreen(
             item {
                 Spacer(modifier = Modifier.height(24.dp))
                 Button(
-                    onClick = onLogout,
+                    onClick = { showLogoutDialog = true },
                     modifier = Modifier.fillMaxWidth().height(56.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFFFFEBEE), 
@@ -125,6 +126,31 @@ fun SettingsScreen(
 
     if (showReportDialog) {
         ReportIssueDialog(onDismiss = { showReportDialog = false })
+    }
+
+    if (showLogoutDialog) {
+        AlertDialog(
+            onDismissRequest = { showLogoutDialog = false },
+            icon = { Icon(Icons.AutoMirrored.Rounded.Logout, contentDescription = null, tint = Color(0xFFD32F2F)) },
+            title = { Text("Logout Confirmation", fontWeight = FontWeight.Bold) },
+            text = { Text("Are you sure you want to logout? You will need to login again to track buses.") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showLogoutDialog = false
+                        onLogout()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F))
+                ) {
+                    Text("Yes, Logout")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLogoutDialog = false }) {
+                    Text("Cancel", color = Color.Gray)
+                }
+            }
+        )
     }
 }
 
