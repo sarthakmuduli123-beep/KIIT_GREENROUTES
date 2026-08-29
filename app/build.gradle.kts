@@ -21,7 +21,7 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         
-        manifestPlaceholders["MAPS_API_KEY"] = "AIzaSyC..." // Example key placeholder, user should replace with real one
+        manifestPlaceholders["MAPS_API_KEY"] = "AIzaSyCvDaKFvipDptLyXzWlaDk6VWOlbJhComw"
     }
 
     buildTypes {
